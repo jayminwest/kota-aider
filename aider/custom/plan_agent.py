@@ -110,23 +110,21 @@ class PlanAgent:
         # Use the coder to generate plan items
         from aider.coders.base_coder import Coder
         try:
-            # Create kwargs with only the model params that exist on the coder
-            model_kwargs = {}
-            if hasattr(self.coder, 'main_model'):
-                model_kwargs['main_model'] = self.coder.main_model
-            if hasattr(self.coder, 'weak_model'):
-                model_kwargs['weak_model'] = self.coder.weak_model
-            if hasattr(self.coder, 'editor_model'):
-                model_kwargs['editor_model'] = self.coder.editor_model
-            if hasattr(self.coder, 'editor_edit_format'):
-                model_kwargs['editor_edit_format'] = self.coder.editor_edit_format
-                
+            # Create a new coder instance with the same model configuration
             plan_coder = Coder.create(
                 io=self.io,
                 from_coder=self.coder,
                 edit_format="ask",
                 summarize_from_coder=False,
-                **model_kwargs
+                main_model=getattr(self.coder, 'main_model', None),
+                weak_model=getattr(self.coder, 'weak_model', None),
+                editor_model=getattr(self.coder, 'editor_model', None),
+                editor_edit_format=getattr(self.coder, 'editor_edit_format', None),
+                temperature=getattr(self.coder, 'temperature', None),
+                top_p=getattr(self.coder, 'top_p', None),
+                max_tokens=getattr(self.coder, 'max_tokens', None),
+                frequency_penalty=getattr(self.coder, 'frequency_penalty', None),
+                presence_penalty=getattr(self.coder, 'presence_penalty', None)
             )
             plan_coder.run(plan_prompt)
         except Exception as e:
