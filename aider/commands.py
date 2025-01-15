@@ -10,6 +10,7 @@ from collections import OrderedDict
 from os.path import expanduser
 from pathlib import Path
 from aider.custom.brainstorm_agent import BrainstormAgent
+from aider.custom.plan_agent import PlanAgent
 
 
 import pyperclip
