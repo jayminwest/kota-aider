@@ -107,37 +107,40 @@ class BrainstormAgent:
         try:
             # Use the main coder's model to generate ideas
             brainstorm_coder = self.coder.clone(
-                edit_format="ask",
+                edit_format="ask", 
                 summarize_from_coder=False
             )
             
             # Run the brainstorm and capture response
             brainstorm_coder.run(brainstorm_prompt)
-        
-        # Get the last assistant message
-        all_messages = brainstorm_coder.done_messages + brainstorm_coder.cur_messages
-        assistant_messages = [msg for msg in reversed(all_messages) if msg["role"] == "assistant"]
-        
-        if assistant_messages:
-            response = assistant_messages[0]["content"]
             
-            # Validate and extract ideas
-            ideas = []
-            for line in response.splitlines():
-                line = line.strip()
-                if line.startswith("- [ ] Idea:"):
-                    idea = line[11:].strip()  # Remove "- [ ] Idea:" prefix
-                    if idea:  # Only add non-empty ideas
-                        ideas.append(idea)
+            # Get the last assistant message
+            all_messages = brainstorm_coder.done_messages + brainstorm_coder.cur_messages
+            assistant_messages = [msg for msg in reversed(all_messages) if msg["role"] == "assistant"]
             
-            if not ideas:
-                self.io.tool_warning("No valid ideas found in the AI response")
-                return
+            if assistant_messages:
+                response = assistant_messages[0]["content"]
                 
-            # Add each idea with confirmation
-            for idea in ideas:
-                if self.io.confirm_ask(f"Add this idea? '{idea}'"):
-                    self.add_idea(idea)
-                    self.io.tool_output(f"Added idea: {idea}")
-                else:
-                    self.io.tool_output(f"Skipped idea: {idea}")
+                # Validate and extract ideas
+                ideas = []
+                for line in response.splitlines():
+                    line = line.strip()
+                    if line.startswith("- [ ] Idea:"):
+                        idea = line[11:].strip()  # Remove "- [ ] Idea:" prefix
+                        if idea:  # Only add non-empty ideas
+                            ideas.append(idea)
+                
+                if not ideas:
+                    self.io.tool_warning("No valid ideas found in the AI response")
+                    return
+                    
+                # Add each idea with confirmation
+                for idea in ideas:
+                    if self.io.confirm_ask(f"Add this idea? '{idea}'"):
+                        self.add_idea(idea)
+                        self.io.tool_output(f"Added idea: {idea}")
+                    else:
+                        self.io.tool_output(f"Skipped idea: {idea}")
+                        
+        except Exception as e:
+            self.io.tool_error(f"Error during brainstorming: {e}")
