@@ -3,13 +3,20 @@ from datetime import datetime
 from .brainstorm_prompts import BrainstormPrompts
 
 class BrainstormAgent:
-    def __init__(self, io, coder=None):
+    def __init__(self, io, coder):
+        if not io:
+            raise ValueError("IO instance required")
+        if not coder:
+            raise ValueError("Coder instance required")
+            
         self.io = io
         self.coder = coder
         self.session_file = Path(".aider/brainstorm/history.md")
-        if coder is None:
-            from aider.coders.base_coder import Coder
-            self.coder = Coder.create(io=io)
+        self.session_files = set()  # Track session-related files
+        
+        # Inherit model settings from main coder
+        self.main_model = coder.main_model
+        self.edit_format = coder.edit_format
         
     def start_session(self):
         """Initialize a new brainstorming session"""
@@ -90,12 +97,8 @@ class BrainstormAgent:
             file_context
         )
 
-        # Use the coder to generate ideas
-        from aider.coders.base_coder import Coder
-        # Create a new coder instance inheriting the main coder's model
-        brainstorm_coder = Coder.create(
-            io=self.io,
-            from_coder=self.coder,
+        # Use the main coder's model to generate ideas
+        brainstorm_coder = self.coder.clone(
             edit_format="ask",
             summarize_from_coder=False
         )

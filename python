@@ -83,11 +83,8 @@ Here are the existing plan items:
 Please suggest 3-5 new tasks or milestones, formatted as markdown bullet points:
 - [ ] Task:"""
 
-        # Use the coder to generate plan items
-        from aider.coders.base_coder import Coder
-        plan_coder = Coder.create(
-            io=self.io,
-            from_coder=self.coder,
+        # Use the main coder's model to generate plan items
+        plan_coder = self.coder.clone(
             edit_format="ask",
             summarize_from_coder=False
         )

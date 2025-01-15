@@ -14,6 +14,10 @@ class PlanAgent:
         self.plan_file = Path(".aider/plans/history.md")
         self.plan_files = set()  # Track plan-related files
         
+        # Inherit model settings from main coder
+        self.main_model = coder.main_model
+        self.edit_format = coder.edit_format
+        
     def start_session(self):
         """Initialize a new planning session"""
         try:
