@@ -3,6 +3,11 @@ from datetime import datetime
 
 class PlanAgent:
     def __init__(self, io, coder):
+        if not io:
+            raise ValueError("IO instance required")
+        if not coder:
+            raise ValueError("Coder instance required")
+            
         self.io = io
         self.coder = coder
         self.plan_file = Path(".aider/plans/history.md")
@@ -51,6 +56,18 @@ class PlanAgent:
             self.io.tool_error(f"Error adding plan item: {e}")
             return False
 
+    def get_chat_files(self):
+        """Safely get chat files from coder"""
+        if not hasattr(self.coder, 'get_inchat_relative_files'):
+            self.io.tool_error("Coder instance is missing required methods")
+            return []
+            
+        try:
+            return self.coder.get_inchat_relative_files()
+        except Exception as e:
+            self.io.tool_error(f"Error getting chat files: {e}")
+            return []
+
     def get_plan_content(self):
         """Get the content of the current plan"""
         try:
@@ -58,7 +75,7 @@ class PlanAgent:
                 return None
                 
             # Check if plan file is in chat files
-            chat_files = self.coder.get_inchat_relative_files()
+            chat_files = self.get_chat_files()
             if str(self.plan_file) not in chat_files:
                 self.coder.add_rel_fname(str(self.plan_file))
                 self.plan_files.add(str(self.plan_file))
@@ -79,7 +96,7 @@ class PlanAgent:
         existing_content = self.get_plan_content() or ""
         
         # Get current chat files for context
-        chat_files = self.coder.get_inchat_relative_files()
+        chat_files = self.get_chat_files()
         files_context = "\n".join(f"- {f}" for f in chat_files if f != str(self.plan_file))
         
         # Create a planning prompt
@@ -96,11 +113,13 @@ Please suggest 3-5 new tasks or milestones, formatted as markdown bullet points:
 
         # Use the coder to generate plan items
         from aider.coders.base_coder import Coder
-        plan_coder = Coder.create(
-            io=self.io,
-            from_coder=self.coder,
-            edit_format="ask",
-            summarize_from_coder=False
-        )
-        
-        plan_coder.run(plan_prompt)
+        try:
+            plan_coder = Coder.create(
+                io=self.io,
+                from_coder=self.coder,
+                edit_format="ask",
+                summarize_from_coder=False
+            )
+            plan_coder.run(plan_prompt)
+        except Exception as e:
+            self.io.tool_error(f"Error creating plan coder: {e}")
