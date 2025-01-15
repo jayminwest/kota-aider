@@ -1408,6 +1408,41 @@ class Commands:
         if user_input.strip():
             self.io.set_placeholder(user_input.rstrip())
 
+    def _start_brainstorm_session(self):
+        """Initialize a new brainstorming session"""
+        try:
+            brainstorm_dir = Path(".aider/brainstorm")
+            brainstorm_dir.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            session_file = brainstorm_dir / "history.md"
+            
+            if not session_file.exists():
+                with open(session_file, "w", encoding="utf-8") as f:
+                    f.write(f"# Brainstorm Session History\n\n")
+                    f.write(f"## Session 1 - {timestamp}\n")
+            
+            self.io.tool_output(f"Brainstorm session started at {timestamp}")
+            return True
+        except Exception as e:
+            self.io.tool_error(f"Error starting brainstorm session: {e}")
+            return False
+
+    def _add_brainstorm_idea(self, idea):
+        """Add an idea to the current brainstorming session"""
+        try:
+            session_file = Path(".aider/brainstorm/history.md")
+            if not session_file.exists():
+                if not self._start_brainstorm_session():
+                    return False
+            
+            with open(session_file, "a", encoding="utf-8") as f:
+                f.write(f"- [ ] Idea: {idea}\n")
+            return True
+        except Exception as e:
+            self.io.tool_error(f"Error adding brainstorm idea: {e}")
+            return False
+
     def cmd_brainstorm(self, args):
         """Start or continue a brainstorming session"""
         if not args.strip():
@@ -1415,8 +1450,8 @@ class Commands:
             self._start_brainstorm_session()
             return
 
-        self._add_brainstorm_idea(args)
-        self.io.tool_output("Added idea to brainstorming session")
+        if self._add_brainstorm_idea(args):
+            self.io.tool_output("Added idea to brainstorming session")
 
     def cmd_plan(self, args):
         """Create or update a project plan"""
