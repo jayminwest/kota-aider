@@ -4,6 +4,8 @@ import re
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
+from datetime import datetime
 from collections import OrderedDict
 from os.path import expanduser
 from pathlib import Path
@@ -1406,6 +1408,40 @@ class Commands:
         if user_input.strip():
             self.io.set_placeholder(user_input.rstrip())
 
+    def cmd_brainstorm(self, args):
+        """Start or continue a brainstorming session"""
+        if not args.strip():
+            self.io.tool_output("Starting new brainstorming session...")
+            self._start_brainstorm_session()
+            return
+
+        self._add_brainstorm_idea(args)
+        self.io.tool_output("Added idea to brainstorming session")
+
+    def cmd_plan(self, args):
+        """Create or update a project plan"""
+        if not args.strip():
+            self.io.tool_output("Starting new project plan...")
+            self._start_plan_session()
+            return
+
+        self._add_plan_item(args)
+        self.io.tool_output("Added item to project plan")
+
+    def cmd_memory(self, args):
+        """Manage memory system"""
+        if not args.strip():
+            self._show_memory_status()
+            return
+
+        subcmd = args.split()[0]
+        if subcmd == "add":
+            self._add_to_memory(" ".join(args.split()[1:]))
+        elif subcmd == "query":
+            self._query_memory(" ".join(args.split()[1:]))
+        else:
+            self.io.tool_error(f"Unknown memory command: {subcmd}")
+
     def cmd_copy_context(self, args=None):
         """Copy the current chat context as markdown, suitable to paste into a web UI"""
 
@@ -1461,6 +1497,99 @@ def expand_subdir(file_path):
             if file.is_file():
                 yield file
 
+
+    def _start_brainstorm_session(self):
+        """Initialize a new brainstorming session"""
+        brainstorm_dir = Path(".aider/brainstorm")
+        brainstorm_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        session_file = brainstorm_dir / "history.md"
+        
+        if not session_file.exists():
+            with open(session_file, "w") as f:
+                f.write(f"# Brainstorm Session History\n\n")
+                f.write(f"## Session 1 - {timestamp}\n")
+        
+        self.io.tool_output(f"Brainstorm session started at {timestamp}")
+
+    def _add_brainstorm_idea(self, idea):
+        """Add an idea to the current brainstorming session"""
+        session_file = Path(".aider/brainstorm/history.md")
+        if not session_file.exists():
+            self._start_brainstorm_session()
+        
+        with open(session_file, "a") as f:
+            f.write(f"- [ ] Idea: {idea}\n")
+
+    def _start_plan_session(self):
+        """Initialize a new project plan"""
+        plan_dir = Path(".aider/plans")
+        plan_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        plan_file = plan_dir / "history.md"
+        
+        if not plan_file.exists():
+            with open(plan_file, "w") as f:
+                f.write(f"# Project Plan History\n\n")
+                f.write(f"## Version 1 - {timestamp}\n")
+        
+        self.io.tool_output(f"Project plan started at {timestamp}")
+
+    def _add_plan_item(self, item):
+        """Add an item to the current project plan"""
+        plan_file = Path(".aider/plans/history.md")
+        if not plan_file.exists():
+            self._start_plan_session()
+        
+        with open(plan_file, "a") as f:
+            f.write(f"- [ ] {item}\n")
+
+    def _show_memory_status(self):
+        """Display memory system status"""
+        memory_dir = Path(".aider/memory")
+        if not memory_dir.exists():
+            self.io.tool_output("Memory system not initialized")
+            return
+        
+        # Show basic memory stats
+        num_files = len(list(memory_dir.glob("*.md")))
+        self.io.tool_output(f"Memory system contains {num_files} memory items")
+
+    def _add_to_memory(self, content):
+        """Add content to memory system"""
+        memory_dir = Path(".aider/memory")
+        memory_dir.mkdir(parents=True, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        memory_file = memory_dir / f"memory_{timestamp}.md"
+        
+        with open(memory_file, "w") as f:
+            f.write(content)
+        
+        self.io.tool_output(f"Added memory item: {memory_file.name}")
+
+    def _query_memory(self, query):
+        """Query memory system"""
+        # Basic implementation - will be enhanced with vector stores later
+        memory_dir = Path(".aider/memory")
+        if not memory_dir.exists():
+            self.io.tool_error("No memory items found")
+            return
+        
+        results = []
+        for memory_file in memory_dir.glob("*.md"):
+            with open(memory_file, "r") as f:
+                content = f.read()
+                if query.lower() in content.lower():
+                    results.append(f"- {memory_file.name}: {content[:100]}...")
+        
+        if results:
+            self.io.tool_output("Memory query results:")
+            self.io.tool_output("\n".join(results))
+        else:
+            self.io.tool_output("No matching memory items found")
 
 def parse_quoted_filenames(args):
     filenames = re.findall(r"\"(.+?)\"|(\S+)", args)
