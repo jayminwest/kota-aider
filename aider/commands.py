@@ -70,6 +70,7 @@ class Commands:
         self.args = args
         self.verbose = verbose
         self.brainstorm_agent = BrainstormAgent(io, coder)
+        self.plan_agent = PlanAgent(io, coder)
 
         self.verify_ssl = verify_ssl
         if voice_language == "auto":
@@ -1550,6 +1551,28 @@ class Commands:
             self._query_memory(" ".join(args.split()[1:]))
         else:
             self.io.tool_error(f"Unknown memory command: {subcmd}")
+
+    def cmd_plan(self, args):
+        """Create or update a project plan with AI assistance. Usage:
+        /plan - Start new plan
+        /plan <prompt> - Get AI-generated tasks for the prompt
+        /plan show - Show current plan
+        """
+        if not args.strip():
+            self.io.tool_output("Starting new project plan...")
+            self.plan_agent.start_session()
+            return
+
+        if args.strip().lower() == "show":
+            content = self.plan_agent.get_plan_content()
+            if content:
+                self.io.tool_output(f"Current project plan:\n\n{content}")
+            else:
+                self.io.tool_output("No project plan found")
+            return
+
+        # Automatically use AI for any input
+        self.plan_agent.plan_with_ai(args)
 
     def cmd_copy_context(self, args=None):
         """Copy the current chat context as markdown, suitable to paste into a web UI"""
