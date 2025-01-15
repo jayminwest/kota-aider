@@ -71,7 +71,7 @@ class Commands:
         self.args = args
         self.verbose = verbose
         self.brainstorm_agent = BrainstormAgent(io, coder)
-        self.plan_agent = PlanAgent(io, coder)
+        self._plan_agent = None  # Lazy initialization
 
         self.verify_ssl = verify_ssl
         if voice_language == "auto":
@@ -1553,6 +1553,15 @@ class Commands:
         else:
             self.io.tool_error(f"Unknown memory command: {subcmd}")
 
+    @property
+    def plan_agent(self):
+        """Lazy initialize the plan agent"""
+        if self._plan_agent is None:
+            if self.coder is None:
+                raise ValueError("Coder must be initialized before creating PlanAgent")
+            self._plan_agent = PlanAgent(self.io, self.coder)
+        return self._plan_agent
+        
     def cmd_plan(self, args):
         """Create or update a project plan with AI assistance. Usage:
         /plan - Start new plan
@@ -1561,7 +1570,7 @@ class Commands:
         """
         if not args.strip():
             self.io.tool_output("Starting new project plan...")
-            self.plan_agent.start_session()
+            self.plan_agent.start_session()  # This will initialize if needed
             return
 
         if args.strip().lower() == "show":
