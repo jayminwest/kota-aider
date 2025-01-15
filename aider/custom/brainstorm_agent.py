@@ -2,10 +2,13 @@ from pathlib import Path
 from datetime import datetime
 
 class BrainstormAgent:
-    def __init__(self, io, coder):
+    def __init__(self, io, coder=None):
         self.io = io
         self.coder = coder
         self.session_file = Path(".aider/brainstorm/history.md")
+        if coder is None:
+            from aider.coders.base_coder import Coder
+            self.coder = Coder.create(io=io)
         
     def start_session(self):
         """Initialize a new brainstorming session"""
@@ -67,9 +70,9 @@ class BrainstormAgent:
         # Get existing ideas
         existing_content = self.get_session_content() or ""
         
-        # Get current chat files context
+        # Get current chat files context if coder is available
         file_context = ""
-        if self.coder.abs_fnames:
+        if self.coder and hasattr(self.coder, 'abs_fnames') and self.coder.abs_fnames:
             file_context = "\n\nCurrent files in chat session:\n"
             for fname in self.coder.abs_fnames:
                 try:
