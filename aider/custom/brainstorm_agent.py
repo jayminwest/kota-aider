@@ -3,6 +3,9 @@ from datetime import datetime
 from .brainstorm_prompts import BrainstormPrompts
 
 class BrainstormAgent:
+    edit_format = "brainstorm"
+    gpt_prompts = BrainstormPrompts()
+
     def __init__(self, io, coder=None):
         if not io:
             raise ValueError("IO instance required")
@@ -14,12 +17,10 @@ class BrainstormAgent:
         
         # Initialize model settings
         self.main_model = None
-        self.edit_format = None
         
         if coder:
             # Inherit model settings from main coder
             self.main_model = coder.main_model
-            self.edit_format = coder.edit_format
         
     def start_session(self):
         """Initialize a new brainstorming session"""

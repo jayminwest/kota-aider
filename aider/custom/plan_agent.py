@@ -3,6 +3,9 @@ from datetime import datetime
 from .plan_prompts import PlanPrompts
 
 class PlanAgent:
+    edit_format = "plan"
+    gpt_prompts = PlanPrompts()
+
     def __init__(self, io, coder):
         if not io:
             raise ValueError("IO instance required")
@@ -16,7 +19,6 @@ class PlanAgent:
         
         # Inherit model settings from main coder
         self.main_model = coder.main_model
-        self.edit_format = coder.edit_format
         
     def start_session(self):
         """Initialize a new planning session"""
