@@ -47,7 +47,13 @@ class BrainstormAgent:
                 return None
                 
             with open(self.session_file, "r", encoding="utf-8") as f:
-                return f.read()
+                content = f.read()
+                # Extract just the ideas, skipping headers
+                ideas = []
+                for line in content.splitlines():
+                    if line.startswith("- [ ] Idea:"):
+                        ideas.append(line)
+                return "\n".join(ideas) if ideas else None
         except Exception as e:
             self.io.tool_error(f"Error reading brainstorm session: {e}")
             return None
@@ -64,11 +70,15 @@ class BrainstormAgent:
         # Create a brainstorming prompt
         brainstorm_prompt = f"""Let's brainstorm some ideas about: {prompt}
 
-Here are some existing ideas:
-{existing_content}
+Previous ideas from our brainstorming session:
+{existing_content or 'No previous ideas yet.'}
 
-Please suggest 3-5 new ideas, formatted as markdown bullet points:
-- [ ] Idea:"""
+Please suggest 3-5 new creative and specific ideas that build on or complement the existing ones.
+Format each idea as a markdown checkbox item starting with "- [ ] Idea: "
+
+For example:
+- [ ] Idea: Implement feature X using approach Y to solve problem Z
+"""
 
         # Use the coder to generate ideas
         from aider.coders.base_coder import Coder
@@ -79,4 +89,16 @@ Please suggest 3-5 new ideas, formatted as markdown bullet points:
             summarize_from_coder=False
         )
         
+        # Run the brainstorm and capture response
         brainstorm_coder.run(brainstorm_prompt)
+        
+        # Get the last assistant message
+        all_messages = brainstorm_coder.done_messages + brainstorm_coder.cur_messages
+        assistant_messages = [msg for msg in reversed(all_messages) if msg["role"] == "assistant"]
+        
+        if assistant_messages:
+            # Extract ideas from the response and add them to history
+            response = assistant_messages[0]["content"]
+            for line in response.splitlines():
+                if line.startswith("- [ ] Idea:"):
+                    self.add_idea(line[13:].strip())  # Remove "- [ ] Idea: " prefix
