@@ -67,11 +67,24 @@ class BrainstormAgent:
         # Get existing ideas
         existing_content = self.get_session_content() or ""
         
+        # Get current chat files context
+        file_context = ""
+        if self.coder.abs_fnames:
+            file_context = "\n\nCurrent files in chat session:\n"
+            for fname in self.coder.abs_fnames:
+                try:
+                    with open(fname, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        file_context += f"\nFile: {fname}\n```\n{content}\n```\n"
+                except Exception as e:
+                    self.io.tool_error(f"Error reading {fname}: {e}")
+        
         # Create a brainstorming prompt
         brainstorm_prompt = f"""Let's brainstorm some ideas about: {prompt}
 
 Previous ideas from our brainstorming session:
 {existing_content or 'No previous ideas yet.'}
+{file_context}
 
 Please suggest 3-5 new creative and specific ideas that build on or complement the existing ones.
 Format each idea as a markdown checkbox item starting with "- [ ] Idea: "

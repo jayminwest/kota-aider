@@ -61,11 +61,24 @@ class PlanAgent:
         # Get existing plan items
         existing_content = self.get_plan_content() or ""
         
+        # Get current chat files context
+        file_context = ""
+        if self.coder.abs_fnames:
+            file_context = "\n\nCurrent files in chat session:\n"
+            for fname in self.coder.abs_fnames:
+                try:
+                    with open(fname, "r", encoding="utf-8") as f:
+                        content = f.read()
+                        file_context += f"\nFile: {fname}\n```\n{content}\n```\n"
+                except Exception as e:
+                    self.io.tool_error(f"Error reading {fname}: {e}")
+        
         # Create a planning prompt
         plan_prompt = f"""Let's create a project plan for: {prompt}
 
 Here are the existing plan items:
 {existing_content}
+{file_context}
 
 Please suggest 3-5 new tasks or milestones, formatted as markdown bullet points:
 - [ ] Task:"""
