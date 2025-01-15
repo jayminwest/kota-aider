@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import datetime
+from .plan_prompts import PlanPrompts
 
 class PlanAgent:
     def __init__(self, io, coder):
@@ -100,16 +101,11 @@ class PlanAgent:
         files_context = "\n".join(f"- {f}" for f in chat_files if f != str(self.plan_file))
         
         # Create a planning prompt
-        plan_prompt = f"""Let's create a project plan for: {prompt}
-
-Current project files:
-{files_context}
-
-Here are the existing plan items:
-{existing_content}
-
-Please suggest 3-5 new tasks or milestones, formatted as markdown bullet points:
-- [ ] Task:"""
+        plan_prompt = PlanPrompts.get_plan_prompt(
+            prompt,
+            existing_content,
+            files_context
+        )
 
         # Use the coder to generate plan items
         from aider.coders.base_coder import Coder
