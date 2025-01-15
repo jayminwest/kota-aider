@@ -6,6 +6,7 @@ class PlanAgent:
         self.io = io
         self.coder = coder
         self.plan_file = Path(".aider/plans/history.md")
+        self.plan_files = set()  # Track plan-related files
         
     def start_session(self):
         """Initialize a new planning session"""
@@ -19,6 +20,10 @@ class PlanAgent:
                 with open(self.plan_file, "w", encoding="utf-8") as f:
                     f.write(f"# Project Plan History\n\n")
                     f.write(f"## Version 1 - {timestamp}\n")
+            
+            # Add plan file to chat session
+            self.coder.add_rel_fname(str(self.plan_file))
+            self.plan_files.add(str(self.plan_file))
             
             self.io.tool_output(f"Planning session started at {timestamp}")
             return True
@@ -35,6 +40,12 @@ class PlanAgent:
             
             with open(self.plan_file, "a", encoding="utf-8") as f:
                 f.write(f"- [ ] {item}\n")
+            
+            # Ensure plan file is in chat session
+            if str(self.plan_file) not in self.plan_files:
+                self.coder.add_rel_fname(str(self.plan_file))
+                self.plan_files.add(str(self.plan_file))
+                
             return True
         except Exception as e:
             self.io.tool_error(f"Error adding plan item: {e}")
@@ -45,6 +56,12 @@ class PlanAgent:
         try:
             if not self.plan_file.exists():
                 return None
+                
+            # Check if plan file is in chat files
+            chat_files = self.coder.get_inchat_relative_files()
+            if str(self.plan_file) not in chat_files:
+                self.coder.add_rel_fname(str(self.plan_file))
+                self.plan_files.add(str(self.plan_file))
                 
             with open(self.plan_file, "r", encoding="utf-8") as f:
                 return f.read()
@@ -61,8 +78,15 @@ class PlanAgent:
         # Get existing plan items
         existing_content = self.get_plan_content() or ""
         
+        # Get current chat files for context
+        chat_files = self.coder.get_inchat_relative_files()
+        files_context = "\n".join(f"- {f}" for f in chat_files if f != str(self.plan_file))
+        
         # Create a planning prompt
         plan_prompt = f"""Let's create a project plan for: {prompt}
+
+Current project files:
+{files_context}
 
 Here are the existing plan items:
 {existing_content}
