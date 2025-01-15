@@ -1110,7 +1110,8 @@ class Commands:
             cmd_method_name = f"cmd_{cmd[1:]}".replace("-", "_")
             cmd_method = getattr(self, cmd_method_name, None)
             if cmd_method:
-                description = cmd_method.__doc__
+                # Get first line of docstring for brief description
+                description = (cmd_method.__doc__ or "").split("\n")[0].strip()
                 res += f"| **{cmd}** | {description} |\n"
             else:
                 res += f"| **{cmd}** | |\n"
@@ -1443,6 +1444,55 @@ class Commands:
             self.io.tool_error(f"Error adding brainstorm idea: {e}")
             return False
 
+    def _start_plan_session(self):
+        """Initialize a new project plan"""
+        try:
+            plan_dir = Path(".aider/plans")
+            plan_dir.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            plan_file = plan_dir / "history.md"
+            
+            if not plan_file.exists():
+                with open(plan_file, "w", encoding="utf-8") as f:
+                    f.write(f"# Project Plan History\n\n")
+                    f.write(f"## Version 1 - {timestamp}\n")
+            
+            self.io.tool_output(f"Project plan started at {timestamp}")
+            return True
+        except Exception as e:
+            self.io.tool_error(f"Error starting project plan: {e}")
+            return False
+
+    def _add_plan_item(self, item):
+        """Add an item to the current project plan"""
+        try:
+            plan_file = Path(".aider/plans/history.md")
+            if not plan_file.exists():
+                if not self._start_plan_session():
+                    return False
+            
+            with open(plan_file, "a", encoding="utf-8") as f:
+                f.write(f"- [ ] {item}\n")
+            return True
+        except Exception as e:
+            self.io.tool_error(f"Error adding plan item: {e}")
+            return False
+
+    def _show_plan(self):
+        """Display the current project plan"""
+        try:
+            plan_file = Path(".aider/plans/history.md")
+            if not plan_file.exists():
+                self.io.tool_output("No project plan found. Use /plan to start one.")
+                return
+            
+            with open(plan_file, "r", encoding="utf-8") as f:
+                content = f.read()
+                self.io.tool_output(f"Current project plan:\n\n{content}")
+        except Exception as e:
+            self.io.tool_error(f"Error showing project plan: {e}")
+
     def cmd_brainstorm(self, args):
         """Start or continue a brainstorming session"""
         if not args.strip():
@@ -1452,6 +1502,24 @@ class Commands:
 
         if self._add_brainstorm_idea(args):
             self.io.tool_output("Added idea to brainstorming session")
+
+    def cmd_plan(self, args):
+        """Create or update a project plan. Usage:
+        /plan - Start new plan
+        /plan <item> - Add item to plan
+        /plan show - Show current plan
+        """
+        if not args.strip():
+            self.io.tool_output("Starting new project plan...")
+            self._start_plan_session()
+            return
+
+        if args.strip().lower() == "show":
+            self._show_plan()
+            return
+
+        if self._add_plan_item(args):
+            self.io.tool_output("Added item to project plan")
 
     def cmd_plan(self, args):
         """Create or update a project plan"""
