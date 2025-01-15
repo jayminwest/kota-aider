@@ -114,7 +114,11 @@ class PlanAgent:
                 io=self.io,
                 from_coder=self.coder,
                 edit_format="ask",
-                summarize_from_coder=False
+                summarize_from_coder=False,
+                main_model=self.coder.main_model,
+                weak_model=self.coder.weak_model,
+                editor_model=self.coder.editor_model,
+                editor_edit_format=self.coder.editor_edit_format
             )
             plan_coder.run(plan_prompt)
         except Exception as e:
