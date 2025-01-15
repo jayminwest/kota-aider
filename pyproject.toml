@@ -1,6 +1,6 @@
 
 [project]
-name = "kaider-chat"
+name = "kaider-install"
 description = "Aider is AI pair programming in your terminal"
 readme = "README.md"
 classifiers = [
