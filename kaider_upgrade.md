@@ -21,26 +21,74 @@ This document outlines the plan to enhance Aider with new features while maximiz
   active_memory.md # Shared memory file
 ```
 
-## Feature Implementation
+## Feature Implementation - Updated Storage Approach
 
 ### Brainstorming System
-- Extend `Commands` class with:
-  - `/brainstorm` command
-  - History viewing commands
-- Use existing:
-  - Chat history system
-  - Markdown formatting
-  - File operations
+- Storage Implementation:
+  - Create `.aider.brainstorm.history.md` file
+  - Use same format as chat history
+  - Add metadata headers for sessions
+  - Include timestamped entries
+  - Support markdown formatting
+
+- Example File Structure:
+```markdown
+# Brainstorm Session History
+
+## Session 1 - 2023-10-15 14:30:00
+- [x] Idea: Implement memory system
+- [ ] Idea: Add planning interface
+- [ ] Idea: Create brainstorming templates
+
+## Session 2 - 2023-10-16 09:15:00
+- [x] Idea: Use existing history format
+- [ ] Idea: Add session management
+```
 
 ### Planning System
+- Storage Implementation:
+  - Create `.aider.plan.history.md` file
+  - Use hierarchical markdown lists
+  - Include task status indicators
+  - Add progress tracking
+  - Support version history
+
+- Example File Structure:
+```markdown
+# Project Plan History
+
+## Version 1 - 2023-10-15
+- [x] Phase 1: Core Extensions
+  - [x] Add new directories
+  - [x] Extend Commands class
+- [ ] Phase 2: Brainstorming
+  - [x] Add brainstorming commands
+  - [ ] Implement session tracking
+
+## Version 2 - 2023-10-16
+- [x] Phase 1: Core Extensions
+  - [x] Add new directories
+  - [x] Extend Commands class
+  - [x] Add configuration system
+- [ ] Phase 2: Brainstorming
+  - [x] Add brainstorming commands
+  - [x] Implement session tracking
+  - [ ] Create history system
+```
+
+### Integration with Existing Systems
 - Leverage:
-  - `RepoMap` for code context
-  - `diffs.py` for versioning
-  - `history.py` for tracking
-- Features:
-  - Hierarchical task lists
-  - Progress visualization
-  - Plan versioning
+  - History file parsing from `history.py`
+  - Markdown rendering from `mdstream.py`
+  - File watching from `watch.py`
+  - Version control from `repo.py`
+
+### Benefits of This Approach
+- Consistent with existing patterns
+- Easy to version control
+- Human-readable format
+- Compatible with existing tools
+- Simple to parse and process
 
 ### Memory System
 - Build on:
