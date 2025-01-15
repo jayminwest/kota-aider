@@ -76,11 +76,19 @@ class BrainstormAgent:
         """Use AI to help brainstorm ideas about the given prompt"""
         if not prompt.strip():
             self.io.tool_error("Please provide a brainstorming prompt")
-            return
+            return False
             
+        # If no coder is provided, create a minimal one
         if not self.coder:
-            self.io.tool_error("Coder instance not available for brainstorming")
-            return
+            from aider.coders.base_coder import Coder
+            self.coder = Coder.create(
+                main_model=self.main_model,
+                edit_format=self.edit_format,
+                io=self.io
+            )
+            if not self.coder:
+                self.io.tool_error("Failed to initialize coder for brainstorming")
+                return False
 
         # Get existing ideas
         existing_content = self.get_session_content() or ""
