@@ -1497,24 +1497,17 @@ class Commands:
             self.io.tool_error(f"Error showing project plan: {e}")
 
     def cmd_brainstorm(self, args):
-        """Start or continue a brainstorming session. Usage:
+        """Start or continue a brainstorming session with AI assistance. Usage:
         /brainstorm - Start new session
-        /brainstorm <idea> - Add idea manually  
-        /brainstorm ai: <prompt> - Get AI-generated ideas
+        /brainstorm <prompt> - Get AI-generated ideas about the prompt
         """
         if not args.strip():
             self.io.tool_output("Starting new brainstorming session...")
             self.brainstorm_agent.start_session()
             return
 
-        # If the input starts with "ai:" use AI brainstorming
-        if args.lower().startswith("ai:"):
-            prompt = args[3:].strip()
-            self.brainstorm_agent.brainstorm_with_ai(prompt)
-        else:
-            # Regular manual brainstorming
-            if self.brainstorm_agent.add_idea(args):
-                self.io.tool_output("Added idea to brainstorming session")
+        # Automatically use AI for any input
+        self.brainstorm_agent.brainstorm_with_ai(args)
 
     def cmd_plan(self, args):
         """Create or update a project plan. Usage:

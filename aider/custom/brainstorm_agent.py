@@ -53,7 +53,7 @@ class BrainstormAgent:
             return None
 
     def brainstorm_with_ai(self, prompt):
-        """Use AI to help brainstorm ideas"""
+        """Use AI to help brainstorm ideas about the given prompt"""
         if not prompt.strip():
             self.io.tool_error("Please provide a brainstorming prompt")
             return
