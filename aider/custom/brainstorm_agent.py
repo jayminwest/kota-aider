@@ -3,7 +3,7 @@ from datetime import datetime
 from .brainstorm_prompts import BrainstormPrompts
 
 class BrainstormAgent:
-    edit_format = "brainstorm"
+    edit_format = "ask"
     gpt_prompts = BrainstormPrompts()
 
     def __init__(self, io, coder=None):
