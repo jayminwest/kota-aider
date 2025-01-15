@@ -110,21 +110,12 @@ class PlanAgent:
         # Use the coder to generate plan items
         from aider.coders.base_coder import Coder
         try:
-            # Create a new coder instance with the same model configuration
+            # Create a new coder instance inheriting the main coder's model
             plan_coder = Coder.create(
                 io=self.io,
                 from_coder=self.coder,
                 edit_format="ask",
-                summarize_from_coder=False,
-                main_model=getattr(self.coder, 'main_model', None),
-                weak_model=getattr(self.coder, 'weak_model', None),
-                editor_model=getattr(self.coder, 'editor_model', None),
-                editor_edit_format=getattr(self.coder, 'editor_edit_format', None),
-                temperature=getattr(self.coder, 'temperature', None),
-                top_p=getattr(self.coder, 'top_p', None),
-                max_tokens=getattr(self.coder, 'max_tokens', None),
-                frequency_penalty=getattr(self.coder, 'frequency_penalty', None),
-                presence_penalty=getattr(self.coder, 'presence_penalty', None)
+                summarize_from_coder=False
             )
             plan_coder.run(plan_prompt)
         except Exception as e:
