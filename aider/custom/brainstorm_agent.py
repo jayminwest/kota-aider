@@ -3,20 +3,23 @@ from datetime import datetime
 from .brainstorm_prompts import BrainstormPrompts
 
 class BrainstormAgent:
-    def __init__(self, io, coder):
+    def __init__(self, io, coder=None):
         if not io:
             raise ValueError("IO instance required")
-        if not coder:
-            raise ValueError("Coder instance required")
             
         self.io = io
         self.coder = coder
         self.session_file = Path(".aider/brainstorm/history.md")
         self.session_files = set()  # Track session-related files
         
-        # Inherit model settings from main coder
-        self.main_model = coder.main_model
-        self.edit_format = coder.edit_format
+        # Initialize model settings
+        self.main_model = None
+        self.edit_format = None
+        
+        if coder:
+            # Inherit model settings from main coder
+            self.main_model = coder.main_model
+            self.edit_format = coder.edit_format
         
     def start_session(self):
         """Initialize a new brainstorming session"""
@@ -74,13 +77,17 @@ class BrainstormAgent:
         if not prompt.strip():
             self.io.tool_error("Please provide a brainstorming prompt")
             return
+            
+        if not self.coder:
+            self.io.tool_error("Coder instance not available for brainstorming")
+            return
 
         # Get existing ideas
         existing_content = self.get_session_content() or ""
         
-        # Get current chat files context if coder is available
+        # Get current chat files context
         file_context = ""
-        if self.coder and hasattr(self.coder, 'abs_fnames') and self.coder.abs_fnames:
+        if hasattr(self.coder, 'abs_fnames') and self.coder.abs_fnames:
             file_context = "\n\nCurrent files in chat session:\n"
             for fname in self.coder.abs_fnames:
                 try:
@@ -97,14 +104,15 @@ class BrainstormAgent:
             file_context
         )
 
-        # Use the main coder's model to generate ideas
-        brainstorm_coder = self.coder.clone(
-            edit_format="ask",
-            summarize_from_coder=False
-        )
-        
-        # Run the brainstorm and capture response
-        brainstorm_coder.run(brainstorm_prompt)
+        try:
+            # Use the main coder's model to generate ideas
+            brainstorm_coder = self.coder.clone(
+                edit_format="ask",
+                summarize_from_coder=False
+            )
+            
+            # Run the brainstorm and capture response
+            brainstorm_coder.run(brainstorm_prompt)
         
         # Get the last assistant message
         all_messages = brainstorm_coder.done_messages + brainstorm_coder.cur_messages
